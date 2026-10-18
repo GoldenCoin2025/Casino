@@ -1,0 +1,108 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Test connection probe allowed for heartbeat
+    match /test/{docId} {
+      allow read: if true;
+    }
+
+    // User Profile: Protected PII (documentNumber, email, balance)
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Disallow querying all users directly
+
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && request.resource.data.id == request.auth.uid
+        && request.resource.data.email is string
+        && request.resource.data.username is string
+        && request.resource.data.username.size() >= 3
+        && request.resource.data.username.size() <= 24
+        && request.resource.data.documentNumber is string
+        && request.resource.data.documentNumber.size() >= 4
+        && request.resource.data.documentNumber.size() <= 30
+        && request.resource.data.balance is number
+        && request.resource.data.balance >= 0;
+
+      allow update: if isOwner(userId)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.documentNumber == resource.data.documentNumber
+        && request.resource.data.balance is number;
+
+      allow delete: if false;
+
+      // Subcollection for bets
+      match /bets/{betId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && isValidId(betId)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.betAmount is number
+          && request.resource.data.betAmount >= 25;
+        allow update, delete: if false;
+      }
+
+      // Subcollection for personal notifications
+      match /notifications/{notifId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Unique Username Index
+    match /usernames/{usernameLower} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && isValidId(usernameLower)
+        && request.resource.data.uid == request.auth.uid
+        && !exists(/databases/$(database)/documents/usernames/$(usernameLower));
+      allow update, delete: if false;
+    }
+
+    // P2P Matchmaking and 24-Hour Asynchronous Game Rooms
+    match /rooms/{roomId} {
+      // Allow reading rooms for matchmaking feeds and lists
+      allow read: if true;
+
+      // Only authenticated users can create a room, must be host and wager >= 25 pesos
+      allow create: if isSignedIn()
+        && isValidId(roomId)
+        && request.resource.data.hostId == request.auth.uid
+        && request.resource.data.wager is number
+        && request.resource.data.wager >= 25
+        && request.resource.data.status in ['waiting', 'waiting_opponent'];
+
+      // Allow updating room when joining as rival, submitting score, resolving or refunding
+      allow update: if isSignedIn()
+        && isValidId(roomId);
+
+      allow delete: if false;
+    }
+
+    // Public Leaderboard: Sanitized stats only (NO PII)
+    match /leaderboard/{userId} {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+  }
+}

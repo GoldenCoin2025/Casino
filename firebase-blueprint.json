@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil internacional del jugador en Berries.bet",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "UID de Firebase Authentication" },
+        "username": { "type": "string", "minLength": 3, "maxLength": 24, "pattern": "^[a-zA-Z0-9_]+$", "description": "Nombre de usuario único" },
+        "usernameLower": { "type": "string", "minLength": 3, "maxLength": 24, "description": "Nombre de usuario en minúsculas para unicidad" },
+        "email": { "type": "string", "format": "email", "description": "Correo electrónico del usuario" },
+        "documentNumber": { "type": "string", "minLength": 4, "maxLength": 30, "description": "Número de documento o pasaporte internacional" },
+        "documentType": { "type": "string", "enum": ["passport", "national_id", "dni", "cedula"], "description": "Tipo de documento" },
+        "country": { "type": "string", "description": "País de residencia del jugador" },
+        "countryFlag": { "type": "string", "description": "Bandera emoji del país" },
+        "avatar": { "type": "string", "description": "Avatar elegido" },
+        "balance": { "type": "number", "description": "Saldo en BerryCoins" },
+        "rating": { "type": "number", "description": "Puntuación ELO PvP" },
+        "wins": { "type": "number", "description": "Victorias totales" },
+        "losses": { "type": "number", "description": "Derrotas totales" },
+        "totalWagered": { "type": "number", "description": "Total de BerryCoins apostadas" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Fecha de registro" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Última actualización" }
+      },
+      "required": ["id", "username", "usernameLower", "email", "documentNumber", "balance", "rating"]
+    },
+    "UsernameIndex": {
+      "title": "UsernameIndex",
+      "description": "Índice de unicidad de nombres de usuario",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "UID del usuario poseedor" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Fecha de reserva" }
+      },
+      "required": ["uid"]
+    },
+    "MatchBet": {
+      "title": "MatchBet",
+      "description": "Registro de duelo o partida PvP",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID único de la partida" },
+        "userId": { "type": "string", "description": "UID del jugador participante" },
+        "gameTitle": { "type": "string", "description": "Nombre del juego jugado" },
+        "opponentName": { "type": "string", "description": "Nombre del oponente" },
+        "result": { "type": "string", "enum": ["win", "loss", "tie"], "description": "Resultado" },
+        "betAmount": { "type": "number", "description": "Monto apostado en BerryCoins / Pesos" },
+        "payout": { "type": "number", "description": "Premio ganado" },
+        "netProfit": { "type": "number", "description": "Ganancia o pérdida neta" },
+        "finalScore": { "type": "string", "description": "Marcador final" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Fecha del duelo" }
+      },
+      "required": ["id", "userId", "gameTitle", "betAmount", "result"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "Sala de juego PvP en vivo o asincrónica con reloj de 24 horas",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID único de la sala" },
+        "gameId": { "type": "string", "enum": ["stacker", "rps", "blockblast", "colorclash", "mines"], "description": "Identificador del juego" },
+        "gameTitle": { "type": "string", "description": "Título del juego" },
+        "wager": { "type": "number", "description": "Monto de la apuesta individual (mínimo 25 pesos)" },
+        "totalPot": { "type": "number", "description": "Pozo total (apuesta x 2)" },
+        "payout": { "type": "number", "description": "Premio neto para el ganador con 6% de comisión descontado" },
+        "status": { "type": "string", "enum": ["waiting", "playing", "waiting_opponent", "completed", "expired"], "description": "Estado de la sala" },
+        "hostId": { "type": "string", "description": "UID del anfitrión creador" },
+        "hostNick": { "type": "string", "description": "Nombre de usuario del anfitrión" },
+        "hostAvatar": { "type": "string", "description": "Avatar del anfitrión" },
+        "hostRating": { "type": "number", "description": "Rating ELO del anfitrión" },
+        "hostScore": { "type": "number", "description": "Puntaje del anfitrión" },
+        "opponentId": { "type": "string", "description": "UID del oponente" },
+        "opponentNick": { "type": "string", "description": "Nick del oponente" },
+        "opponentAvatar": { "type": "string", "description": "Avatar del oponente" },
+        "opponentRating": { "type": "number", "description": "Rating del oponente" },
+        "opponentScore": { "type": "number", "description": "Puntaje del oponente" },
+        "winnerId": { "type": "string", "description": "UID del ganador o 'tie'" },
+        "winnerNick": { "type": "string", "description": "Nick del ganador" },
+        "claimedByWinner": { "type": "boolean", "description": "Indica si el ganador ya cobró el pozo" },
+        "isRefunded": { "type": "boolean", "description": "Indica si se devolvió la apuesta por expiración" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Fecha de creación" },
+        "expiresAt": { "type": "number", "description": "Timestamp en ms de expiración (24h)" },
+        "completedAt": { "type": "string", "format": "date-time", "description": "Fecha de resolución" }
+      },
+      "required": ["id", "gameId", "gameTitle", "wager", "totalPot", "payout", "status", "hostId", "hostNick", "expiresAt"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "Notificación personal de duelos y resultados",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID de la notificación" },
+        "title": { "type": "string", "description": "Título" },
+        "message": { "type": "string", "description": "Mensaje detallado" },
+        "timestamp": { "type": "number", "description": "Timestamp" },
+        "read": { "type": "boolean", "description": "Estado de lectura" },
+        "type": { "type": "string", "enum": ["win", "loss", "challenge", "refund"], "description": "Tipo de notificación" }
+      },
+      "required": ["id", "title", "message", "timestamp", "read", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Perfiles privados y públicos de cada jugador autenticado"
+    },
+    "/usernames/{usernameLower}": {
+      "schema": { "$ref": "#/entities/UsernameIndex" },
+      "description": "Garantía de nombre de usuario único en toda la plataforma"
+    },
+    "/users/{userId}/bets/{betId}": {
+      "schema": { "$ref": "#/entities/MatchBet" },
+      "description": "Historial de partidas y apuestas personales de cada usuario"
+    },
+    "/users/{userId}/notifications/{notifId}": {
+      "schema": { "$ref": "#/entities/AppNotification" },
+      "description": "Notificaciones personales de cada jugador"
+    },
+    "/rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/Room" },
+      "description": "Salas de duelos PvP y desafíos asincrónicos con reloj de 24 horas"
+    }
+  }
+}

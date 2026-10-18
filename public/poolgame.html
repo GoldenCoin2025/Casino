@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Berries Casino - 8-Ball Pool Master</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23111827' stroke='%2306b6d4' stroke-width='4'/><circle cx='50' cy='50' r='20' fill='%23ffffff'/><text x='50' y='57' font-size='22' font-family='Arial' font-weight='bold' text-anchor='middle' fill='%23111827'>8</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #050b14;
+      color: #f1f5f9;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      touch-action: none;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    canvas {
+      display: block;
+      touch-action: none;
+    }
+    .neon-border {
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.35), inset 0 0 15px rgba(6, 182, 212, 0.15);
+    }
+    .gold-glow {
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    }
+    /* Custom power slider */
+    input[type=range].power-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range].power-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 22px;
+      width: 22px;
+      border-radius: 50%;
+      background: #06b6d4;
+      cursor: pointer;
+      box-shadow: 0 0 10px #06b6d4;
+      margin-top: -8px;
+    }
+    input[type=range].power-slider::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #1e293b;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between">
+  <!-- TOP HEADER HUD -->
+  <header class="w-full bg-slate-900/90 backdrop-blur-md border-b border-cyan-500/20 px-4 py-2.5 flex items-center justify-between gap-4 z-20 shrink-0">
+    <div class="flex items-center gap-3">
+      <a href="/" id="btnReturnToCasino" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 text-xs sm:text-sm font-bold transition-all shadow hover:shadow-cyan-500/20 active:scale-95">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <span>Volver al Casino</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-500 flex items-center justify-center font-black text-white text-sm shadow">
+          🎱
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-black tracking-tight text-white flex items-center gap-1.5">
+            BILLAR 8-BALL <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold">PRO</span>
+          </h1>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Berries Casino Real Physics Pool</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Turn / Status Indicator -->
+    <div class="flex items-center gap-3">
+      <div id="turnBadge" class="px-3 py-1 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs sm:text-sm font-extrabold flex items-center gap-2 shadow">
+        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        <span id="turnText">Turno: Jugador 1</span>
+      </div>
+
+      <div class="hidden md:flex items-center gap-1 px-3 py-1 rounded-xl bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-300">
+        <span>Tiro:</span>
+        <span id="shotCount" class="font-bold text-amber-400">0</span>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="flex items-center gap-2">
+      <button id="btnSound" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 hover:text-white transition-all text-xs" title="Sonido">
+        🔊
+      </button>
+      <button id="btnReset" class="px-3 py-1.5 rounded-xl bg-red-950/60 hover:bg-red-900/60 border border-red-500/30 text-red-300 text-xs font-bold transition-all active:scale-95" title="Reiniciar Mesa">
+        Reiniciar
+      </button>
+      <button id="btnRules" class="px-3 py-1.5 rounded-xl bg-blue-950/60 hover:bg-blue-900/60 border border-blue-500/30 text-cyan-300 text-xs font-bold transition-all active:scale-95">
+        Reglas
+      </button>
+    </div>
+  </header>
+
+  <!-- POTTED BALLS TRAY -->
+  <div class="w-full bg-slate-950/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between text-xs text-slate-400 shrink-0 z-10">
+    <div class="flex items-center gap-2 overflow-x-auto py-0.5">
+      <span class="font-semibold text-slate-300 text-[11px] whitespace-nowrap">Bolas embocadas:</span>
+      <div id="pottedBallsTray" class="flex items-center gap-1.5 min-h-[22px]">
+        <span class="text-[11px] text-slate-500 italic">Ninguna bola embocada aún</span>
+      </div>
+    </div>
+    <div id="statusMessage" class="text-right text-[11px] font-semibold text-amber-300 truncate max-w-[200px] sm:max-w-xs">
+      Apunta arrastrando el ratón o el taco
+    </div>
+  </div>
+
+  <!-- CANVAS GAME AREA -->
+  <main id="gameContainer" class="relative flex-1 w-full h-full flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+    <canvas id="poolCanvas" class="rounded-2xl shadow-2xl neon-border border border-cyan-500/20 cursor-crosshair"></canvas>
+
+    <!-- FOUL / BALL IN HAND OVERLAY -->
+    <div id="ballInHandAlert" class="hidden absolute top-6 px-4 py-2 rounded-2xl bg-amber-500/90 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wide shadow-2xl animate-bounce border-2 border-white pointer-events-none">
+      ⚠️ ¡Falta! Bola en mano (Haz clic para colocar la bola blanca)
+    </div>
+
+    <!-- RULES MODAL -->
+    <div id="rulesModal" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div class="w-full max-w-md bg-slate-900 border border-cyan-500/40 rounded-2xl p-6 shadow-2xl space-y-4 text-slate-200">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-black text-cyan-300 flex items-center gap-2">
+            <span>🎱</span> Reglas de Billar (8-Ball)
+          </h2>
+          <button id="btnCloseRules" class="text-slate-400 hover:text-white font-bold text-lg">&times;</button>
+        </div>
+        <div class="text-xs sm:text-sm space-y-2 text-slate-300 leading-relaxed max-h-72 overflow-y-auto pr-1">
+          <p><strong class="text-cyan-400">1. Objetivo:</strong> Emboca todas las bolas de tu grupo (Lisas: 1-7 o Rayadas: 9-15) y luego emboca limpiamente la bola negra <strong>(8)</strong>.</p>
+          <p><strong class="text-cyan-400">2. Control del Taco:</strong> Arrastra el cursor o dedo para apuntar. Usa la barra de potencia inferior o arrastra hacia atrás para golpear.</p>
+          <p><strong class="text-cyan-400">3. Faltas:</strong> Si embocas la bola blanca, hay falta ("Bola en mano") y podrás reubicar la bola blanca en la mesa.</p>
+          <p><strong class="text-cyan-400">4. Perder:</strong> Embocar la bola 8 antes de tiempo o cometer falta al embocar la bola 8 hace perder la partida.</p>
+        </div>
+        <button id="btnUnderstood" class="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-black uppercase text-xs transition-all">
+          ¡Entendido, a jugar!
+        </button>
+      </div>
+    </div>
+
+    <!-- WINNER / GAME OVER MODAL -->
+    <div id="gameOverModal" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div class="w-full max-w-md bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 gold-glow">
+        <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-4xl shadow-xl">
+          🏆
+        </div>
+        <div>
+          <h2 id="winnerText" class="text-2xl sm:text-3xl font-black text-amber-300 uppercase tracking-tight">
+            ¡VICTORIA!
+          </h2>
+          <p id="winnerSubtitle" class="text-xs sm:text-sm text-slate-300 mt-1">
+            Partida completada con maestría
+          </p>
+        </div>
+        <div class="bg-slate-950/80 rounded-2xl p-4 border border-slate-800 text-xs text-slate-300 space-y-1">
+          <div class="flex justify-between">
+            <span>Tiros totales:</span>
+            <span id="statShots" class="font-bold text-white">0</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Bolas embocadas:</span>
+            <span id="statPotted" class="font-bold text-cyan-400">0</span>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <button id="btnPlayAgain" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black uppercase text-xs tracking-wider transition-all shadow-lg active:scale-95">
+            Jugar de Nuevo
+          </button>
+          <a href="/" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold uppercase text-xs tracking-wider transition-all border border-cyan-500/30 flex items-center justify-center active:scale-95">
+            Volver al Casino
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- BOTTOM CONTROLS & POWER BAR -->
+  <footer class="w-full bg-slate-900/90 backdrop-blur-md border-t border-cyan-500/20 px-4 py-2.5 flex flex-wrap items-center justify-between gap-4 z-20 shrink-0">
+    <!-- Power slider -->
+    <div class="flex-1 min-w-[220px] max-w-md flex items-center gap-3">
+      <span class="text-xs font-black text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+        <span>⚡</span> Potencia:
+      </span>
+      <div class="flex-1 relative flex items-center">
+        <input id="powerSlider" type="range" min="1" max="100" value="45" class="power-slider">
+      </div>
+      <span id="powerValue" class="text-xs font-bold text-slate-200 w-9 text-right">45%</span>
+    </div>
+
+    <!-- Shoot button -->
+    <div class="flex items-center gap-3">
+      <button id="btnShoot" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black uppercase text-xs tracking-wider shadow-lg shadow-cyan-900/40 transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 fill-slate-950" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>GOLPEAR BOLA</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- POOL GAME JAVASCRIPT CODE -->
+  <script>
+    // --- WEB AUDIO SOUND SYNTHESIZER ---
+    class PoolAudio {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playCueHit(power = 1) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+        gain.gain.setValueAtTime(0.4 * Math.min(power, 1.2), now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      }
+      playBallHit(vol = 0.5) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(850, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+        gain.gain.setValueAtTime(Math.min(vol * 0.35, 0.4), now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      }
+      playPocket() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(90, now + 0.18);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.21);
+      }
+      playFoul() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(120, now + 0.25);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.26);
+      }
+    }
+    const audio = new PoolAudio();
+
+    // --- GAME CONSTANTS & STATE ---
+    const BALL_RADIUS = 12; // virtual table units
+    const TABLE_WIDTH = 800; // virtual units
+    const TABLE_HEIGHT = 400; // virtual units
+    const CUSHION_WIDTH = 34; // virtual units
+    const POCKET_RADIUS = 24; // virtual units
+
+    // Ball Colors (1-7 Solids, 8 Black, 9-15 Stripes)
+    const BALL_COLORS = {
+      0: '#ffffff', // Cue
+      1: '#eab308', // Yellow
+      2: '#2563eb', // Blue
+      3: '#dc2626', // Red
+      4: '#9333ea', // Purple
+      5: '#ea580c', // Orange
+      6: '#16a34a', // Green
+      7: '#991b1b', // Maroon
+      8: '#0f172a', // 8-Ball
+      9: '#eab308', // Stripe Yellow
+      10: '#2563eb', // Stripe Blue
+      11: '#dc2626', // Stripe Red
+      12: '#9333ea', // Stripe Purple
+      13: '#ea580c', // Stripe Orange
+      14: '#16a34a', // Stripe Green
+      15: '#991b1b', // Stripe Maroon
+    };
+
+    class Ball {
+      constructor(id, x, y) {
+        this.id = id;
+        this.x = x;
+        this.y = y;
+        this.vx = 0;
+        this.vy = 0;
+        this.radius = BALL_RADIUS;
+        this.potted = false;
+        this.isStriped = id >= 9;
+        this.color = BALL_COLORS[id] || '#fff';
+      }
+    }
+
+    class PoolGame {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.balls = [];
+        this.pockets = [];
+        this.aimAngle = 0;
+        this.power = 45;
+        this.isAiming = false;
+        this.isShooting = false;
+        this.isPlacingCue = false;
+        this.shotCount = 0;
+        this.currentPlayer = 1;
+        this.pottedThisTurn = [];
+        this.allPotted = [];
+        this.scale = 1;
+        this.offsetX = 0;
+        this.offsetY = 0;
+
+        this.initPockets();
+        this.resetRack();
+        this.bindEvents();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        this.loop = this.loop.bind(this);
+        requestAnimationFrame(this.loop);
+      }
+
+      initPockets() {
+        const left = CUSHION_WIDTH;
+        const right = TABLE_WIDTH - CUSHION_WIDTH;
+        const top = CUSHION_WIDTH;
+        const bottom = TABLE_HEIGHT - CUSHION_WIDTH;
+        const midX = TABLE_WIDTH / 2;
+
+        this.pockets = [
+          { x: left + 6, y: top + 6 },       // Top Left
+          { x: midX, y: top },              // Top Mid
+          { x: right - 6, y: top + 6 },     // Top Right
+          { x: left + 6, y: bottom - 6 },   // Bottom Left
+          { x: midX, y: bottom },           // Bottom Mid
+          { x: right - 6, y: bottom - 6 },  // Bottom Right
+        ];
+      }
+
+      resetRack() {
+        this.balls = [];
+        this.shotCount = 0;
+        this.allPotted = [];
+        this.pottedThisTurn = [];
+        this.isPlacingCue = false;
+        document.getElementById('ballInHandAlert').classList.add('hidden');
+        document.getElementById('shotCount').textContent = '0';
+        this.updatePottedTray();
+
+        // 1. Cue Ball placed on the head string (left quarter)
+        const cueBall = new Ball(0, TABLE_WIDTH * 0.28, TABLE_HEIGHT * 0.5);
+        this.balls.push(cueBall);
+
+        // 2. 15 Balls Triangle Rack (Apex at TABLE_WIDTH * 0.68)
+        const startX = TABLE_WIDTH * 0.68;
+        const startY = TABLE_HEIGHT * 0.5;
+        const r = BALL_RADIUS;
+        const rowDist = r * Math.sqrt(3) + 0.6;
+
+        // Standard 8-ball order with 8 in center
+        const rackOrder = [
+          [1],
+          [9, 2],
+          [3, 8, 10],
+          [11, 4, 12, 5],
+          [6, 13, 7, 14, 15]
+        ];
+
+        for (let row = 0; row < rackOrder.length; row++) {
+          const count = rackOrder[row].length;
+          const rx = startX + row * rowDist;
+          const rowStartY = startY - ((count - 1) * (r * 2 + 0.6)) / 2;
+          for (let col = 0; col < count; col++) {
+            const ry = rowStartY + col * (r * 2 + 0.6);
+            const ballId = rackOrder[row][col];
+            this.balls.push(new Ball(ballId, rx, ry));
+          }
+        }
+
+        // Aim towards the rack by default
+        this.aimAngle = 0;
+      }
+
+      resize() {
+        const container = document.getElementById('gameContainer');
+        const availWidth = container.clientWidth - 20;
+        const availHeight = container.clientHeight - 20;
+
+        // Maintain 2:1 aspect ratio
+        let w = availWidth;
+        let h = w * (TABLE_HEIGHT / TABLE_WIDTH);
+
+        if (h > availHeight) {
+          h = availHeight;
+          w = h * (TABLE_WIDTH / TABLE_HEIGHT);
+        }
+
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = w * dpr;
+        this.canvas.height = h * dpr;
+        this.canvas.style.width = `${w}px`;
+        this.canvas.style.height = `${h}px`;
+
+        this.scale = (w / TABLE_WIDTH) * dpr;
+      }
+
+      getMousePos(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+        const x = (clientX - rect.left) * (this.canvas.width / rect.width) / this.scale;
+        const y = (clientY - rect.top) * (this.canvas.height / rect.height) / this.scale;
+        return { x, y };
+      }
+
+      bindEvents() {
+        const canvas = this.canvas;
+
+        const updateAim = (e) => {
+          if (this.areBallsMoving()) return;
+          const pos = this.getMousePos(e);
+          const cue = this.getCueBall();
+          if (!cue || cue.potted) return;
+
+          if (this.isPlacingCue) {
+            cue.x = Math.max(CUSHION_WIDTH + BALL_RADIUS + 2, Math.min(TABLE_WIDTH * 0.45, pos.x));
+            cue.y = Math.max(CUSHION_WIDTH + BALL_RADIUS + 2, Math.min(TABLE_HEIGHT - CUSHION_WIDTH - BALL_RADIUS - 2, pos.y));
+            return;
+          }
+
+          const dx = pos.x - cue.x;
+          const dy = pos.y - cue.y;
+          this.aimAngle = Math.atan2(dy, dx);
+        };
+
+        canvas.addEventListener('mousemove', updateAim);
+        canvas.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          updateAim(e);
+        }, { passive: false });
+
+        canvas.addEventListener('click', (e) => {
+          if (this.isPlacingCue) {
+            this.isPlacingCue = false;
+            document.getElementById('ballInHandAlert').classList.add('hidden');
+            document.getElementById('statusMessage').textContent = 'Bola ubicada. ¡Apunta y dispara!';
+          }
+        });
+
+        // Power slider input
+        const slider = document.getElementById('powerSlider');
+        slider.addEventListener('input', (e) => {
+          this.power = Number(e.target.value);
+          document.getElementById('powerValue').textContent = `${this.power}%`;
+        });
+
+        // Shoot button
+        document.getElementById('btnShoot').addEventListener('click', () => {
+          this.shootCue();
+        });
+
+        // Reset button
+        document.getElementById('btnReset').addEventListener('click', () => {
+          this.resetRack();
+        });
+
+        // Sound toggle
+        const btnSound = document.getElementById('btnSound');
+        btnSound.addEventListener('click', () => {
+          audio.muted = !audio.muted;
+          btnSound.textContent = audio.muted ? '🔇' : '🔊';
+        });
+
+        // Rules modal
+        const rulesModal = document.getElementById('rulesModal');
+        document.getElementById('btnRules').addEventListener('click', () => {
+          rulesModal.classList.remove('hidden');
+        });
+        document.getElementById('btnCloseRules').addEventListener('click', () => {
+          rulesModal.classList.add('hidden');
+        });
+        document.getElementById('btnUnderstood').addEventListener('click', () => {
+          rulesModal.classList.add('hidden');
+        });
+
+        // Play again
+        document.getElementById('btnPlayAgain').addEventListener('click', () => {
+          document.getElementById('gameOverModal').classList.add('hidden');
+          this.resetRack();
+        });
+      }
+
+      getCueBall() {
+        return this.balls.find(b => b.id === 0);
+      }
+
+      areBallsMoving() {
+        return this.balls.some(b => !b.potted && (Math.abs(b.vx) > 0.05 || Math.abs(b.vy) > 0.05));
+      }
+
+      shootCue() {
+        if (this.areBallsMoving() || this.isPlacingCue) return;
+        const cue = this.getCueBall();
+        if (!cue || cue.potted) return;
+
+        audio.init();
+        const force = (this.power / 100) * 22 + 4; // Velocity scale
+        cue.vx = Math.cos(this.aimAngle) * force;
+        cue.vy = Math.sin(this.aimAngle) * force;
+
+        this.shotCount++;
+        document.getElementById('shotCount').textContent = this.shotCount;
+        this.pottedThisTurn = [];
+        audio.playCueHit(this.power / 60);
+
+        document.getElementById('statusMessage').textContent = '¡Tiro en movimiento!';
+      }
+
+      updatePhysics() {
+        const SUBSTEPS = 8;
+        const dt = 1 / SUBSTEPS;
+        const FRICTION = 0.989; // per full step
+        const stepFriction = Math.pow(FRICTION, dt);
+
+        const left = CUSHION_WIDTH;
+        const right = TABLE_WIDTH - CUSHION_WIDTH;
+        const top = CUSHION_WIDTH;
+        const bottom = TABLE_HEIGHT - CUSHION_WIDTH;
+
+        for (let step = 0; step < SUBSTEPS; step++) {
+          // 1. Move & pocket check
+          for (const b of this.balls) {
+            if (b.potted) continue;
+
+            b.x += b.vx * dt;
+            b.y += b.vy * dt;
+            b.vx *= stepFriction;
+            b.vy *= stepFriction;
+
+            if (Math.hypot(b.vx, b.vy) < 0.02) {
+              b.vx = 0;
+              b.vy = 0;
+            }
+
+            // Pocket drop check
+            for (const p of this.pockets) {
+              const dist = Math.hypot(b.x - p.x, b.y - p.y);
+              if (dist < POCKET_RADIUS * 0.92) {
+                b.potted = true;
+                b.vx = 0;
+                b.vy = 0;
+                this.onBallPotted(b);
+                break;
+              }
+            }
+
+            if (b.potted) continue;
+
+            // Cushion bounces
+            if (b.x - b.radius < left) {
+              b.x = left + b.radius;
+              b.vx = -b.vx * 0.92;
+              audio.playBallHit(0.2);
+            } else if (b.x + b.radius > right) {
+              b.x = right - b.radius;
+              b.vx = -b.vx * 0.92;
+              audio.playBallHit(0.2);
+            }
+
+            if (b.y - b.radius < top) {
+              b.y = top + b.radius;
+              b.vy = -b.vy * 0.92;
+              audio.playBallHit(0.2);
+            } else if (b.y + b.radius > bottom) {
+              b.y = bottom - b.radius;
+              b.vy = -b.vy * 0.92;
+              audio.playBallHit(0.2);
+            }
+          }
+
+          // 2. Ball-to-ball elastic collisions
+          for (let i = 0; i < this.balls.length; i++) {
+            const b1 = this.balls[i];
+            if (b1.potted) continue;
+
+            for (let j = i + 1; j < this.balls.length; j++) {
+              const b2 = this.balls[j];
+              if (b2.potted) continue;
+
+              const dx = b2.x - b1.x;
+              const dy = b2.y - b1.y;
+              const dist = Math.hypot(dx, dy);
+              const minDist = b1.radius + b2.radius;
+
+              if (dist < minDist && dist > 0.0001) {
+                // Separate
+                const overlap = (minDist - dist) / 2;
+                const nx = dx / dist;
+                const ny = dy / dist;
+
+                b1.x -= nx * overlap;
+                b1.y -= ny * overlap;
+                b2.x += nx * overlap;
+                b2.y += ny * overlap;
+
+                // Relative velocity
+                const kx = b1.vx - b2.vx;
+                const ky = b1.vy - b2.vy;
+                const p = 2 * (nx * kx + ny * ky) / 2; // Equal mass = 1
+
+                b1.vx -= p * nx * 0.95;
+                b1.vy -= p * ny * 0.95;
+                b2.vx += p * nx * 0.95;
+                b2.vy += p * ny * 0.95;
+
+                const imp = Math.hypot(p * nx, p * ny);
+                if (imp > 0.4) {
+                  audio.playBallHit(imp / 6);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      onBallPotted(ball) {
+        audio.playPocket();
+        this.pottedThisTurn.push(ball.id);
+        if (ball.id !== 0) {
+          this.allPotted.push(ball.id);
+          this.updatePottedTray();
+        }
+
+        if (ball.id === 8) {
+          // 8-Ball potted!
+          const remainingBalls = this.balls.filter(b => b.id !== 0 && b.id !== 8 && !b.potted).length;
+          const cue = this.getCueBall();
+          if (remainingBalls > 0 || (cue && cue.potted)) {
+            // Early 8-ball or foul on 8
+            this.showGameOver(false, '¡Has embocado la bola 8 antes de tiempo o con falta! Pierdes la partida.');
+          } else {
+            // Clean win!
+            this.showGameOver(true, '¡Increíble! Embocaste la bola 8 legalmente tras limpiar la mesa.');
+          }
+        }
+      }
+
+      updatePottedTray() {
+        const tray = document.getElementById('pottedBallsTray');
+        if (this.allPotted.length === 0) {
+          tray.innerHTML = '<span class="text-[11px] text-slate-500 italic">Ninguna bola embocada aún</span>';
+          return;
+        }
+        tray.innerHTML = this.allPotted.map(id => {
+          const color = BALL_COLORS[id];
+          const isStripe = id >= 9;
+          return `<div class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shadow" style="background-color: ${color}; border: 1.5px solid ${isStripe ? '#fff' : '#000'}; color: ${id === 1 || id === 9 ? '#000' : '#fff'};" title="Bola ${id}">${id}</div>`;
+        }).join('');
+      }
+
+      showGameOver(isWin, message) {
+        const modal = document.getElementById('gameOverModal');
+        const winnerText = document.getElementById('winnerText');
+        const winnerSubtitle = document.getElementById('winnerSubtitle');
+        const statShots = document.getElementById('statShots');
+        const statPotted = document.getElementById('statPotted');
+
+        winnerText.textContent = isWin ? '¡VICTORIA ÉPICA!' : 'FIN DE PARTIDA';
+        winnerText.className = isWin ? 'text-2xl sm:text-3xl font-black text-amber-300 uppercase tracking-tight' : 'text-2xl sm:text-3xl font-black text-red-400 uppercase tracking-tight';
+        winnerSubtitle.textContent = message;
+        statShots.textContent = this.shotCount;
+        statPotted.textContent = `${this.allPotted.length} de 15 bolas`;
+
+        modal.classList.remove('hidden');
+      }
+
+      checkTurnResolution() {
+        if (this.areBallsMoving()) return;
+
+        // Turn just finished
+        const cue = this.getCueBall();
+        if (cue && cue.potted) {
+          // Scratch foul!
+          cue.potted = false;
+          cue.vx = 0;
+          cue.vy = 0;
+          cue.x = TABLE_WIDTH * 0.28;
+          cue.y = TABLE_HEIGHT * 0.5;
+          this.isPlacingCue = true;
+          audio.playFoul();
+          document.getElementById('ballInHandAlert').classList.remove('hidden');
+          document.getElementById('statusMessage').textContent = '⚠️ Bola blanca embocada. Haz clic en la mesa para reubicarla.';
+        } else {
+          document.getElementById('statusMessage').textContent = 'Mesa lista. Selecciona ángulo y potencia.';
+        }
+      }
+
+      draw() {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.scale(this.scale, this.scale);
+
+        // Clear canvas
+        ctx.fillStyle = '#050b14';
+        ctx.fillRect(0, 0, TABLE_WIDTH, TABLE_HEIGHT);
+
+        // 1. Table Outer Wood Rail
+        ctx.fillStyle = '#26150a'; // Mahogany wood
+        ctx.beginPath();
+        ctx.roundRect(0, 0, TABLE_WIDTH, TABLE_HEIGHT, 24);
+        ctx.fill();
+
+        // Rail border & wood grain highlight
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#45220f';
+        ctx.stroke();
+
+        // 2. Playfield Bed (Classic Velvet Pool Cloth)
+        const feltX = CUSHION_WIDTH;
+        const feltY = CUSHION_WIDTH;
+        const feltW = TABLE_WIDTH - CUSHION_WIDTH * 2;
+        const feltH = TABLE_HEIGHT - CUSHION_WIDTH * 2;
+
+        const feltGrad = ctx.createLinearGradient(feltX, feltY, feltX + feltW, feltY + feltH);
+        feltGrad.addColorStop(0, '#0c5c36'); // Deep emerald green
+        feltGrad.addColorStop(0.5, '#0e7042');
+        feltGrad.addColorStop(1, '#094829');
+        ctx.fillStyle = feltGrad;
+        ctx.fillRect(feltX, feltY, feltW, feltH);
+
+        // Head string subtle dashed line
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.setLineDash([4, 6]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(TABLE_WIDTH * 0.28, feltY);
+        ctx.lineTo(TABLE_WIDTH * 0.28, feltY + feltH);
+        ctx.stroke();
+
+        // Foot spot
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.beginPath();
+        ctx.arc(TABLE_WIDTH * 0.68, TABLE_HEIGHT * 0.5, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // 3. Rail Diamond Sights
+        ctx.fillStyle = '#fef08a';
+        const diamondsX = [TABLE_WIDTH * 0.25, TABLE_WIDTH * 0.5, TABLE_WIDTH * 0.75];
+        for (const dx of diamondsX) {
+          // Top & bottom diamonds
+          this.drawDiamond(ctx, dx, CUSHION_WIDTH / 2);
+          this.drawDiamond(ctx, dx, TABLE_HEIGHT - CUSHION_WIDTH / 2);
+        }
+        const diamondsY = [TABLE_HEIGHT * 0.33, TABLE_HEIGHT * 0.66];
+        for (const dy of diamondsY) {
+          // Left & right diamonds
+          this.drawDiamond(ctx, CUSHION_WIDTH / 2, dy);
+          this.drawDiamond(ctx, TABLE_WIDTH - CUSHION_WIDTH / 2, dy);
+        }
+
+        // 4. Pockets
+        for (const p of this.pockets) {
+          // Outer pocket leather bezel
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, POCKET_RADIUS, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Brass trim
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = '#b45309';
+          ctx.stroke();
+
+          // Deep hole drop
+          ctx.fillStyle = '#020617';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, POCKET_RADIUS - 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 5. Balls
+        for (const b of this.balls) {
+          if (b.potted) continue;
+          this.drawBall(ctx, b);
+        }
+
+        // 6. Aiming Guide & Cue Stick
+        const cue = this.getCueBall();
+        const moving = this.areBallsMoving();
+        if (cue && !cue.potted && !moving && !this.isPlacingCue) {
+          this.drawAimGuideAndCue(ctx, cue);
+        }
+
+        ctx.restore();
+      }
+
+      drawDiamond(ctx, x, y) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.beginPath();
+        ctx.moveTo(0, -3.5);
+        ctx.lineTo(3.5, 0);
+        ctx.lineTo(0, 3.5);
+        ctx.lineTo(-3.5, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      drawBall(ctx, b) {
+        ctx.save();
+        ctx.translate(b.x, b.y);
+
+        // Shadow under ball
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.beginPath();
+        ctx.arc(2, 3, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Base sphere
+        if (b.id === 0) {
+          // Cue Ball
+          const grad = ctx.createRadialGradient(-3, -3, 2, 0, 0, b.radius);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.7, '#f1f5f9');
+          grad.addColorStop(1, '#cbd5e1');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Red spot for spin indicator
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(0, 0, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (b.isStriped) {
+          // Striped Ball: White body with colored central band
+          ctx.fillStyle = '#f8fafc';
+          ctx.beginPath();
+          ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Colored band
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
+          ctx.clip();
+
+          ctx.fillStyle = b.color;
+          ctx.fillRect(-b.radius, -b.radius * 0.48, b.radius * 2, b.radius * 0.96);
+          ctx.restore();
+
+          // Number Circle Decal
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(0, 0, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 6.5px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(b.id.toString(), 0, 0.5);
+        } else {
+          // Solid Ball
+          const grad = ctx.createRadialGradient(-3, -3, 2, 0, 0, b.radius);
+          grad.addColorStop(0, b.color);
+          grad.addColorStop(1, '#000000');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Number Decal
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(0, 0, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 6.5px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(b.id.toString(), 0, 0.5);
+        }
+
+        // 3D Specular glare reflection
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.beginPath();
+        ctx.arc(-b.radius * 0.3, -b.radius * 0.3, b.radius * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawAimGuideAndCue(ctx, cue) {
+        const cos = Math.cos(this.aimAngle);
+        const sin = Math.sin(this.aimAngle);
+
+        // Raycast forward to find first ball hit or cushion hit
+        let closestDist = 400;
+        let hitBall = null;
+
+        for (const b of this.balls) {
+          if (b.id === 0 || b.potted) continue;
+          // Vector to ball
+          const dx = b.x - cue.x;
+          const dy = b.y - cue.y;
+          const proj = dx * cos + dy * sin;
+          if (proj > 0) {
+            const perpDist = Math.abs(dx * (-sin) + dy * cos);
+            if (perpDist < BALL_RADIUS * 2) {
+              const d = proj - Math.sqrt(Math.max(0, (BALL_RADIUS * 2) ** 2 - perpDist ** 2));
+              if (d > 0 && d < closestDist) {
+                closestDist = d;
+                hitBall = b;
+              }
+            }
+          }
+        }
+
+        const targetX = cue.x + cos * closestDist;
+        const targetY = cue.y + sin * closestDist;
+
+        // Dashed trajectory aim line
+        ctx.save();
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.75)';
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(cue.x + cos * BALL_RADIUS, cue.y + sin * BALL_RADIUS);
+        ctx.lineTo(targetX, targetY);
+        ctx.stroke();
+
+        // Ghost cue ball at impact point
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.arc(targetX, targetY, BALL_RADIUS, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (hitBall) {
+          // Object ball projected path
+          const bdx = hitBall.x - targetX;
+          const bdy = hitBall.y - targetY;
+          const bdist = Math.hypot(bdx, bdy);
+          if (bdist > 0.001) {
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(hitBall.x, hitBall.y);
+            ctx.lineTo(hitBall.x + (bdx / bdist) * 45, hitBall.y + (bdy / bdist) * 45);
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+
+        // Draw Cue Stick
+        ctx.save();
+        ctx.translate(cue.x, cue.y);
+        ctx.rotate(this.aimAngle + Math.PI); // Point towards cue ball
+
+        // Stick pull back based on power
+        const pullBack = 15 + (this.power / 100) * 35;
+        const stickLength = 220;
+
+        // Stick Wood Taper
+        const stickGrad = ctx.createLinearGradient(pullBack, 0, pullBack + stickLength, 0);
+        stickGrad.addColorStop(0, '#fef08a'); // Chalk / Maple tip
+        stickGrad.addColorStop(0.3, '#d97706'); // Amber wood
+        stickGrad.addColorStop(0.8, '#451a03'); // Dark walnut handle
+        stickGrad.addColorStop(1, '#1e1b4b'); // Grip
+
+        ctx.fillStyle = stickGrad;
+        ctx.beginPath();
+        ctx.moveTo(pullBack, -2);
+        ctx.lineTo(pullBack + stickLength, -4.5);
+        ctx.lineTo(pullBack + stickLength, 4.5);
+        ctx.lineTo(pullBack, 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Tip Chalk / Ferrule
+        ctx.fillStyle = '#06b6d4'; // Cyan chalk tip
+        ctx.fillRect(pullBack, -2, 3, 4);
+
+        ctx.restore();
+      }
+
+      loop() {
+        this.updatePhysics();
+        this.checkTurnResolution();
+        this.draw();
+        requestAnimationFrame(this.loop);
+      }
+    }
+
+    // Initialize Game on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById('poolCanvas');
+      window.poolInstance = new PoolGame(canvas);
+    });
+  </script>
+</body>
+</html>

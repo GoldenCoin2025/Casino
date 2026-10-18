@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #060c20;
+    color: #f1f5f9;
+  }
+  
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Custom CrazyGames Deep Blue Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #060c20;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e3a8a;
+  border-radius: 9999px;
+  border: 2px solid #060c20;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2563eb;
+}
+
+/* CrazyGames Card Hover Effect */
+.crazy-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.crazy-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 16px 32px -8px rgba(37, 99, 235, 0.35);
+}
+
+/* Glowing Neon Borders */
+.glow-blue {
+  box-shadow: 0 0 25px -4px rgba(59, 130, 246, 0.5);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 25px -4px rgba(6, 182, 212, 0.5);
+}
+
+.glow-magenta {
+  box-shadow: 0 0 25px -4px rgba(236, 72, 153, 0.5);
+}
+
+/* 3D Card Flip & Perspective */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+@keyframes screenShake {
+  0%, 100% { transform: translate(0, 0); }
+  20%, 60% { transform: translate(-6px, 4px) rotate(-1deg); }
+  40%, 80% { transform: translate(6px, -4px) rotate(1deg); }
+}
+
+.animate-shake {
+  animation: screenShake 0.45s ease-in-out;
+}
+
+

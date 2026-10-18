@@ -1,0 +1,6 @@
+{
+  "name": "Berries Casino Online",
+  "description": "Exclusivo casino online con apuestas en BerryCoins y juego de Piedra, Papel o Tijera de alta gama.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
